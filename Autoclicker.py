@@ -13,6 +13,8 @@ running: bool = False
 randomTimeOffset: bool = False
 randomPositionOffset: bool = False
 
+pyautogui.FAILSAFE = False #allows the autoclicker to click at (0,0)
+
 window.title('AutoClicker')
 
 def clickedStart(): #start the autoclicker from the start button
@@ -24,33 +26,30 @@ def startAutoclicker(shouldStart): #start the autoclicker if shouldStart
     if shouldStart == False:
         return
     
+    global running
     hideWidgets() #hide widgets so the autoclicker does not click its own buttons by mistake
     time.sleep(2)
 
     intervalInt = None
-    error : bool = False
     xOffset, yOffset, timeOffset = 0, 0, 0
 
     try:
         intervalInt = float(txtClickDelay.get())
     except:
-        pass
+        intervalInt = 0
 
     try:
         xCoordinate = int(txtClickXPosition.get())
         yCoordinate = int(txtClickYPosition.get())
     except:
-        error = True
+        xCoordinate, yCoordinate = 0, 0
     pyautogui.click(xCoordinate, yCoordinate)
     start = time.time()
 
     while True:
-        if keyboard.is_pressed('0') or error == True or keyboard.is_pressed(hotkey):
+        if keyboard.is_pressed(hotkey):
             break
-        if intervalInt == None:
-            pyautogui.click(xCoordinate, yCoordinate)
-            continue
-        if time.time() < (start + intervalInt):
+        if time.time() <= (start + intervalInt):
             continue
         if(randomPositionOffset):
             xOffset, yOffset = random.randrange(-5,5), random.randrange(-5,5)
@@ -61,14 +60,14 @@ def startAutoclicker(shouldStart): #start the autoclicker if shouldStart
 
     showWidgets()
 
-def setHotkey(): #update the global hotkey value, show it in the diplay and bind the new hotkey
+def setHotkey(): #update the global hotkey value and code, diplay and bind the new hotkey
     global hotkey
     global hotkeyCode
-    keyboard.remove_hotkey(hotkeyCode) # remove old hot key
+    keyboard.remove_hotkey(hotkeyCode) # hotkeyCode identifies the previously bound hotkey and is returned by keyboard.add_hotkey()
 
-    hotkey = keyboard.read_key() # read new hotkey
-    updateButtonText(btnStart, f'Start ({hotkey})') # update the start button text with the new hotkey
-    hotkeyCode = keyboard.add_hotkey(hotkey, hotkeyPress) # set up the new hotkey
+    hotkey = keyboard.read_key()
+    updateButtonText(btnStart, f'Start ({hotkey})')
+    hotkeyCode = keyboard.add_hotkey(hotkey, hotkeyPress)
 
 def hotkeyPress(): #start/stop the autoclicker depending on the state of "running"
     global running
@@ -136,6 +135,7 @@ lblPosition.grid(column=3, row=0, padx=(10,50))
 
 txtClickDelay = tk.Entry(window, width=10)
 txtClickDelay.grid(column=1, row=1, padx=(50,10))
+txtClickDelay.insert(tk.END, '0')
 
 txtClickXPosition = tk.Entry(window, width=4)
 txtClickXPosition.grid(column=3, row=1, padx=(10,110))
